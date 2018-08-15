@@ -9,8 +9,10 @@
 # restore windows and setup your previous work env. Not secure (duh.), use with 
 # extreme caution. 
 
+
 RECORD_NAME="record-`date +%FT%T`"
 PROCESS=0
+
 if [ "$1" == "--help" ]
 then
   echo "usage: wth.sh [-l | -r | -n]"
@@ -38,19 +40,25 @@ then
     do 
       if [[ ${line:0:1} == "#" ]]
       then
+        # if a comment, print the line
         echo $line
       else
+        # otherwise, execute the line
         $line
       fi 
     done < $file
-    PROCESS=1
+
+    PROCESS=1  # indicate that we are not processing input
+ 
   elif [ "$1" == '-n' ] || [ "$1" == '--name' ]
   then
+    # if no second arg
     if [ -z "$2" ]
     then
       echo "No name supplied"
       exit 1
     fi
+    
     # Redefine the name of the record.
     # strip underscores
     CLEAN=${2//_/}
@@ -68,6 +76,7 @@ if [ $PROCESS -eq 0 ]
 then
   while read stdin
   do
+    # write the input out to the record
     echo $stdin > ~/wth/$RECORD_NAME.sh
   done
   echo "Added record to file: ~/wth/$RECORD_NAME.sh"
