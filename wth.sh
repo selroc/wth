@@ -102,6 +102,7 @@ fi
 if [ $PROCESS -eq 0 ]
 then
   cat >> $WTH_LOCATION/$RECORD_NAME-$NAME.sh
+  chmod +x $WTH_LOCATION/$RECORD_NAME-$NAME.sh
   echo "Added record to file: $WTH_LOCATION/$RECORD_NAME-$NAME.sh"
   exit 0
 fi
