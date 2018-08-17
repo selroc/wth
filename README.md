@@ -23,7 +23,7 @@ Added record to file: ~/wth/record-2018-08-15T10:15:05-wonder_whatever.sh
 ```
 
 ### Observing Output
-You can see the records recorded using `wth.sh --list`. Preview of records is capped at 3. Lines are not executed.
+You can see the records recorded using `wth.sh -l` or `wth.sh --list`. Preview of records is capped at 3. Lines are not executed.
 ```bash
 $ wth.sh -l
 (2018/08/15 at 10:14:35) untitled:            (record-2018-08-15T10:14:35-untitled.sh)

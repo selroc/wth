@@ -66,7 +66,7 @@ then
 
       # print first 2 lines of record
       echo "--------------------------------------------"
-      cat $f | head -2
+      cat $f | head -3
       echo ""
     done
 
