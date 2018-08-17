@@ -16,17 +16,8 @@ PROCESS=0
 
 # exec a record
 exec_record() {
-  while read -r line
-  do
-    if [[ ${line:0:1} == "#" ]]
-    then
-      # if a comment, print the line
-      echo $line
-    else
-      # otherwise, execute the line
-      $line
-    fi
-  done < "$1"
+  grep '^\#.*$' $1
+  sh $1
 }
 
 # check for help
@@ -51,7 +42,7 @@ EOF
 # if args
 elif [ $# -ge 1 ]
 then
-  if [ "$1" == '-l' ] || [ "$1" == '--list' ]
+  if [ "$1" == "-l" ] || [ "$1" == "--list" ]
   then
     # loop through the records
     for f in $WTH_LOCATION/record*.sh
@@ -73,7 +64,7 @@ then
     PROCESS=1  # indicate we shouldn't process stdin
 
   # if looking to run a random record
-  elif [ "$1" == '-r' ] || [ "$1" == '--random' ]
+  elif [ "$1" == "-r" ] || [ "$1" == "--random" ]
   then
     # list the records, randomize it, get the first record
     file=`ls -Gt $WTH_LOCATION/record*.sh | sort -R | tail -1`
@@ -83,12 +74,12 @@ then
     PROCESS=1  # indicate we shouldn't process stdin
 
   # if specifying name for record
-  elif [ "$1" == '-n' ] || [ "$1" == '--name' ]
+  elif [ "$1" == "-n" ] || [ "$1" == "--name" ]
   then
     # if no second arg
     if [ -z "$2" ]
     then
-      echo "No name supplied"
+      echo "No record name supplied"
       exit 1
     fi
 
@@ -103,7 +94,8 @@ then
     NAME="`echo $CLEAN | tr A-Z a-z`"
 
   # if specifying execute a record
-  elif [ $1 == '-e' ] || [ "$1" == '--name' ]
+  elif [ "$1" == "-e" ] || [ "$1" == "--execute" ] ||
+       [ "$1" == "-d" ] || [ "$1" == "--delete" ]
   then
     if [ -z "$2" ]
     then
@@ -138,7 +130,7 @@ then
     if [ ${#FOUND[@]} -eq 0 ]
     then
       echo "Could not find specified record name, try running wth.sh -l and" \
-           "providing the name after the date"
+           "providing the resulting name shown after the date"
       exit 1
 
     # if multiple things found
@@ -164,8 +156,13 @@ then
       TO_EXEC=${FOUND_PATH[0]}
     fi
 
-    # execute the record
-    exec_record "$TO_EXEC"
+    if [ "$1" == "-e" ] || [ "$1" == "--execute" ]
+    then
+      # execute the record
+      exec_record "$TO_EXEC"
+    else
+      rm "$TO_EXEC"
+    fi
 
     PROCESS=1  # indicate we shouldn't process stdin
 

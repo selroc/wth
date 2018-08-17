@@ -60,6 +60,13 @@ Command commands in cat to command what Cathy calculated
 2.5
 ```
 
+### Decidedly Deleting
+You can delete records two ways: using `wth -d name` or by manually deleting a record in ~/wth. If there are duplicates, a prompt will popup with your options.
+```bash
+$ wth.sh -d untitled
+$
+```
+
 ### Contributing
 `wth` is simple and dumb. Help make it better by opening issues and submitting merge requests. You know the deal.
 
