@@ -23,7 +23,7 @@ Added record to file: ~/wth/record-2018-08-15T10:15:05-wonder_whatever.sh
 ```
 
 ### Observing Output
-You can see the records recorded using `wth.sh -l`. Preview of records is capped at 3. Lines are not executed.
+You can see the records recorded using `wth.sh --list`. Preview of records is capped at 3. Lines are not executed.
 ```bash
 $ wth.sh -l
 (2018/08/15 at 10:14:35) untitled:            (record-2018-08-15T10:14:35-untitled.sh)
@@ -39,14 +39,19 @@ echo "Walter was wondering whatever... "
 ```
 
 ### Exact Execution
-You can run a specific record by going to ~/wth and running a record. Listing a record `-l` can help you find which record you want.
+You can run a specific record by it's name using `wth -e name`, where name is the name of the record. Comments inside the program are printed out. If there are duplicates, a prompt will popup with your options. Listing a record `-l` can help you find which record you want.
+```bash
+$ wth.sh -e wonder_whatever
+Walter was wondering whatever...
+```
+(Records are stored as sh scripts, meaning you can run them like any other)
 ```bash
 $ /bin/bash ~/wth/record-2018-08-15T01:12:03-wonder_whatever.sh
 Walter was wondering whatever...
 ```
 
 ### Randomly Running
-If you want to launch a random record, you can do so by running `wth.sh -r` or `wth.sh --random`. Doing so will result in a random record being executed. Comments inside the program will be printed out.
+If you want to launch a random record, you can do so by running `wth.sh -r` or `wth.sh --random`. Doing so will result in a random record being executed. Comments inside the program are also printed out.
 ```bash
 $ wth.sh -r
 # Should show when shoving -l
