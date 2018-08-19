@@ -23,7 +23,7 @@ exec_record() {
 # check for help
 if [ "$1" == "--help" ]
 then
-  echo "usage: wth.sh [-l | -r | -n]"
+  echo "usage: wth.sh [-l | -r | -n | -e]"
   echo ""
   cat <<EOF
 Records commands and comments into a bash file that can be retrieved to
@@ -48,7 +48,7 @@ then
     for f in $WTH_LOCATION/record*.sh
     do
       RECORD_FN=`basename "$f"`
-      FN=`echo "$RECORD_FN" | awk -F '-' '{ print $5 }' | sed 's/.sh//'`
+      FN=`echo "$RECORD_FN" | awk -F '-' '{ print $5 }' | sed 's/\.sh//'`
       RECORD_DATE=`echo "$RECORD_FN" | sed 's/record-//' | sed "s/-$FN.sh//" \
                    | sed 's/T/ at /' | sed 's;-;/;g'`
 
