@@ -1,18 +1,20 @@
 # What the hell was I working on (`wth`):
 
-A dumb program that lets you record what you're doing by piping info into stdin.
-Records can be later run/viewed to see/do what you were working on. Input provided is put in it's own script in `~/wth`. Stdin is not sanitized. This is intended such that the recorded bash commands can be run to restore windows and setup your previous work enviroment. Not secure (should be obvious), follows no nonsense design approach.
+A program that lets you record notes/actions about what you're doing in a organized and labeled fashion. Records can then be run/viewed later to see your notes. Each record is stored as a bash script so actions can be taken when executing the record.
 _In Progress..._
 
-### Recording records:
+**TL;DR:** A wrapper script that makes editing, listing, adding and deleting bash scripts for the purpose of record keeping easier.
+
+### Recording Records:
 `wth` takes in stdin that is written to a record in `~/wth`
 ```bash
 $ cat <<EOF | wth.sh
-# Should show when shoving -l
-# it is a comment since internally it (wth) itemizes records in bash scripts
+# I like to put titles here.
+# Is a comment since wth stores records in bash scripts (so you can run them)
 echo "Command commands in cat to command what Cathy calculated"
-python3 -c "print(5 / 2)"
+python -c "print(5 / 2.0)"
 EOF
+Added record to file: /Users/dylngg/wth/record-2018-08-31T23:33:01-untitled.sh
 ```
 
 You can/should name your record using the `-n` or `--name` option:
@@ -22,53 +24,57 @@ $ "echo \"Walter was wondering whatever... \"" | wth.sh -n "Wonder Whatever"
 Added record to file: ~/wth/record-2018-08-15T10:15:05-wonder_whatever.sh
 ```
 
-### Observing Output
-You can see the records recorded using `wth.sh -l` or `wth.sh --list`. Preview of records is capped at 3. Lines are not executed.
+### Listing your Records
+You can see the records listed using `wth.sh -l` or `wth.sh --list`. Preview of records is capped at 3. Lines are not executed.
 ```bash
 $ wth.sh -l
 (2018/08/15 at 10:14:35) untitled:            (record-2018-08-15T10:14:35-untitled.sh)
 --------------------------------------------
-# Should show when shoving -l
-# it is a comment since internally it (wth) itemizes records in sh scripts
+# I like to put titles here.
+# Is a comment since wth stores records in bash scripts (so you can run them)
 echo "Command commands in cat to command what Cathy calculated"
 
-(2018/08/15 at 10:15:05) wonder_whatever:      (record-2018-08-15T10:15:05-wonder_whatever.sh)
+(2018/08/15 at 10:15:05) wonder_whatever:     (record-2018-08-15T10:15:05-wonder_whatever.sh)
 --------------------------------------------
 echo "Walter was wondering whatever... "
 
 ```
 
-### Exact Execution
-You can run a specific record by it's name using `wth -e name`, where name is the name of the record. Comments inside the program are printed out. If there are duplicates, a prompt will popup with your options. Listing a record `-l` can help you find which record you want.
+### Executing records
+You can run a specific record by it's name using `wth recordname`, where recordname is the name of the record to execute. Comments inside the program are printed out. If there are duplicates, a prompt will popup with your options. Listing a record `-l` can help you find which record you want.
 ```bash
-$ wth.sh -e wonder_whatever
+$ wth.sh wonder_whatever
 Walter was wondering whatever...
 ```
-(Records are stored as sh scripts, meaning you can run them like any other)
+(Records are stored as sh scripts in ~/wth by default, meaning you can run them like any other bash script)
 ```bash
 $ /bin/bash ~/wth/record-2018-08-15T01:12:03-wonder_whatever.sh
 Walter was wondering whatever...
 ```
 
-### Randomly Running
-If you want to launch a random record, you can do so by running `wth.sh -r` or `wth.sh --random`. Doing so will result in a random record being executed. Comments inside the program are also printed out.
-```bash
-$ wth.sh -r
-# Should show when shoving -l
-# it is a comment since internally it (wth) itemizes records in sh scripts
-Command commands in cat to command what Cathy calculated
-2.5
+### Editing records
+You can edit a existing record by doing `wth -e recordname`, where recordname is (you guessed it), the name of the record you want to edit. It opens the record in whatever editor is set in `$EDITOR`. If that enviroment variable is not set, it opens the record in vim. You can add the following to your shell configuration (`~/.bashrc`): `export EDITOR="vim"` to set one.
+```
+$ wth -e wonder_whatever
 ```
 
-### Decidedly Deleting
+### Deleting records
 You can delete records two ways: using `wth -d name` or by manually deleting a record in ~/wth. If there are duplicates, a prompt will popup with your options.
 ```bash
 $ wth.sh -d untitled
 $
 ```
 
+### Randomly executing records
+If you want to launch a random record, you can do so by running `wth.sh -r` or `wth.sh --random`. Doing so will result in a random record being executed. Comments inside the program are also printed out. This is useful if you're bored.
+```bash
+$ wth.sh -r
+# I like to put titles here.
+# Is a comment since wth stores records in bash scripts (so you can run them)
+Command commands in cat to command what Cathy calculated
+2.5
+```
+
+
 ### Contributing
 `wth` is simple and dumb. Help make it better by opening issues and submitting merge requests. You know the deal.
-
-
-And also, I am awful at alliteration.
