@@ -5,6 +5,9 @@ _In Progress..._
 
 **TL;DR:** A wrapper script that makes editing, listing, adding and deleting bash scripts for the purpose of record keeping easier.
 
+### Skip the fluff:
+`wth.sh --help`
+
 ### Recording Records:
 `wth` takes in stdin that is written to a record in `~/wth`
 ```bash
@@ -77,4 +80,4 @@ Command commands in cat to command what Cathy calculated
 
 
 ### Contributing
-`wth` is simple and dumb. Help make it better by opening issues and submitting merge requests. You know the deal.
+`wth` is simple and dumb. Help make it better by opening issues and submitting merge requests. I have no contribution guidelines or rules besides being respectful. You know the deal.

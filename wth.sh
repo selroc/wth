@@ -109,8 +109,9 @@ EOF
   echo "    -n, --name            Specifes the name of the new record"
   echo "    -l, --list            Lists all the records"
   echo "    -r, --random          A random record is selected and executed"
-  echo "    -e, --edit            Edit a record with the editor specifed in the\
-environment variable \$EDITOR. If the variable is not set, opens in vim."
+  echo "    -e, --edit            Edit a record with the editor specifed in the
+                          environment variable \$EDITOR. If the variable is not
+                          set, opens in vim."
   exit 0
 
 # if args
