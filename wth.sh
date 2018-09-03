@@ -38,8 +38,9 @@ list_records() {
 }
 
 # Gets the given record name and queries which record if there are duplicates.
-# Puts the record name in $RECORDPATH. If the user fails to correctly choose
-# a duplicate, returns a empty recordname.
+# Puts the chosen record name(s) in $RECORDPATH. If the user inputs '*' for the
+# given duplicates, returns all valid values. If the user fails to correctly
+# choose a duplicate, returns a empty recordname.
 RECORDPATH=''
 get_recordname_path() {
     if [ -z "$1" ]; then
@@ -82,7 +83,11 @@ get_recordname_path() {
       # ask the user which one they want
       echo "Choose which one to take your action on: "
       read input
-      RECORDPATH=${FOUND_PATH[$input]}
+      if [ "$input" = "*" ]; then
+          RECORDPATH="${FOUND_PATH[*]}"
+      else
+          RECORDPATH=${FOUND_PATH[$input]}
+      fi
 
     # if there's only one thing found
     elif [ ${#FOUND[@]} -eq 1 ]; then
@@ -169,14 +174,14 @@ elif [ $# -ge 1 ]; then
     if [ "$1" == "-e" ] || [ "$1" == "--edit" ]; then
       # edit the record in the default editor
       if [ "$EDITOR" != "" ]; then
-        $EDITOR "$RECORDPATH"
+        $EDITOR `echo $RECORDPATH`
       else
-        vim "$RECORDPATH"
+        vim `echo $RECORDPATH`
       fi
 
     # If specifying to delete
     else
-      rm "$RECORDPATH"
+      rm -rf `echo $RECORDPATH`
     fi
 
     PROCESS_STDIN=false  # indicate we shouldn't process stdin
