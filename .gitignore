@@ -1,2 +1,4 @@
 # Ignore Records
 record*.sh
+# Ignore VSCode
+.vscode

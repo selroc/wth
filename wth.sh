@@ -11,7 +11,8 @@ RECORD_NAME="record-`date +%FT%T`"
 DEFAULT_NAME="untitled"
 PROCESS_STDIN=true
 
-# exec a record
+
+# Exec a record
 exec_record() {
   grep '^\#.*$' $1
   sh $1
@@ -22,9 +23,8 @@ RECORD_FILENAMES=()
 RECORD_NAMES=()
 RECORD_DATES=()
 # Puts all the records and their properties in arrays above
-list_records() {
-    for f in $WTH_LOCATION/record*.sh
-    do
+place_record_metadata() {
+    for f in $WTH_LOCATION/record*.sh; do
       RECORD_FULL_PATHS+=("$f")
       NAME=`basename "$f"`
       RECORD_FILENAMES+=("$NAME")
@@ -37,24 +37,47 @@ list_records() {
     done
 }
 
-# Gets the given record name and queries which record if there are duplicates.
-# Puts the chosen record name(s) in $RECORDPATH. If the user inputs '*' for the
-# given duplicates, returns all valid values. If the user fails to correctly
-# choose a duplicate, returns a empty recordname.
-RECORDPATH=''
+# Strips a given name to remove unwanted characters and returns it
+strip_name() {
+  # Redefine the name of the record.
+  CLEAN=${1//_/}  # strip underscores
+  CLEAN=${CLEAN// /_}  # replace spaces with underscores
+  CLEAN=${CLEAN//[^a-zA-Z0-9_]/}   # remove all but alphanumeric or underscore
+  return "`echo $CLEAN | tr A-Z a-z`"  # convert to lowercase
+} 
+
+# Prints out the records ordered by date, giving the recordname and a preview 
+PREVIEW_LENGTH=3
+list_records() {
+  # Set all the arrays that contain record information
+  place_record_metadata
+
+  for ((i=0; i<${#RECORD_FULL_PATHS[@]}; i++)); do
+    printf "%-23s %-25s\n" "(${RECORD_DATES[$i]})" "${RECORD_NAMES[$i]}:"
+
+    # print first 2 lines of record
+    echo "---"
+    cat "${RECORD_FULL_PATHS[$i]}" | head -$PREVIEW_LENGTH
+    echo ""
+  done
+}
+
+# Gets the given record name and queries which record if there are duplicates,
+# returning the record path. If the user inputs '*' for the given duplicates, # returns all valid values. If the user fails to correctly choose a duplicate, # returns a empty recordname.
 get_recordname_path() {
     if [ -z "$1" ]; then
       echo "No record name specified"
       exit 1
     fi
 
+    NEW_RECORD_PATH=""
     SPECIFIED_NAME=$1
     FOUND_DATES=()
     FOUND=()
     FOUND_PATH=()
 
-    # loop through records
-    list_records
+    # loop through records and see if we can find the one specified
+    place_record_metadata
     for ((i=0; i<${#RECORD_FILENAMES[@]}; i++)); do
 
       # check if the name is right
@@ -84,29 +107,30 @@ get_recordname_path() {
       echo "Choose which one to take your action on: "
       read input
       if [ "$input" = "*" ]; then
-          RECORDPATH="${FOUND_PATH[*]}"
+          NEWRECORDPATH="${FOUND_PATH[*]}"
       else
-          RECORDPATH=${FOUND_PATH[$input]}
+          NEW_RECORD_PATH=${FOUND_PATH[$input]}
       fi
 
     # if there's only one thing found
     elif [ ${#FOUND[@]} -eq 1 ]; then
-      RECORDPATH=${FOUND_PATH[0]}
+      NEW_RECORD_PATH=${FOUND_PATH[0]}
     fi
+
+    return $NEW_RECORD_PATH
 }
 
-# check for help
-if [ "$1" == "--help" ]; then
+print_help() {
   echo "usage: wth.sh <recordname-to-open>"
-  echo "   or  wth.sh [ -l | -r | -e <recordname>]"
+  echo "   or  wth.sh [ -l | -r | -e <recordname>] "
   echo "   or  wth.sh -n <recordname>"
   echo ""
   cat <<EOF
 A program that lets you record notes/actions about what you're doing in a
 organized and labeled fashion. Records can then be run/viewed later to see
 your notes. Each record is stored as a bash script so actions can be taken
-when executing the record. Unless given a record name, -l or -r flag,
-stdin is processed as a record into a file in ~/wth.
+when executing the record. Unless given a record name to execute, -l, -e or -r
+flag, stdin is processed as a record into a file in ~/wth.
 EOF
 
   echo ""
@@ -117,6 +141,12 @@ EOF
   echo "    -e, --edit            Edit a record with the editor specifed in the
                           environment variable \$EDITOR. If the variable is not
                           set, opens in vim."
+}
+
+
+# check for help
+if [ "$1" == "--help" ]; then
+  print_help
   exit 0
 
 # if args
@@ -124,19 +154,7 @@ elif [ $# -ge 1 ]; then
 
   # Check if specifying a list of records
   if [ "$1" == "-l" ] || [ "$1" == "--list" ]; then
-    list_records  # Set all the arrays that contain record information
-
-    # loop through the records
-    for ((i=0; i<${#RECORD_FULL_PATHS[@]}; i++)); do
-      # print (date) filename: (record-filename)
-      printf "%-23s %-25s %s\n" "(${RECORD_DATES[$i]})" "${RECORD_NAMES[$i]}:" \
-             "(${RECORD_FILENAMES[$i]})"
-
-      # print first 2 lines of record
-      echo "--------------------------------------------"
-      cat "${RECORD_FULL_PATHS[$i]}" | head -3
-      echo ""
-    done
+    list_records
 
     PROCESS_STDIN=false  # indicate we shouldn't process stdin
 
@@ -146,7 +164,6 @@ elif [ $# -ge 1 ]; then
     file=`ls -Gt $WTH_LOCATION/record*.sh | sort -R | tail -1`
 
     exec_record $file
-
     PROCESS_STDIN=false  # indicate we shouldn't process stdin
 
   # If specifying name for record
@@ -157,18 +174,12 @@ elif [ $# -ge 1 ]; then
       exit 1
     fi
 
-    # Redefine the name of the record.
-    CLEAN=${2//_/}  # strip underscores
-    CLEAN=${CLEAN// /_}  # replace spaces with underscores
-    CLEAN=${CLEAN//[^a-zA-Z0-9_]/}   # remove all but alphanumeric or underscore
-    DEFAULT_NAME="`echo $CLEAN | tr A-Z a-z`"  # convert to lowercase
-
-    # We are expecting stdin, so don't change PROCESS_STDIN
+    DEFAULT_NAME=$(strip_name $2)
 
   # If specifying deleting or editing a record
   elif [ "$1" == "-e" ] || [ "$1" == "--edit" ] ||
        [ "$1" == "-d" ] || [ "$1" == "--delete" ]; then
-    get_recordname_path $2
+    RECORDPATH=$(get_recordname_path $2)
 
     # If specifying to edit
     if [ "$1" == "-e" ] || [ "$1" == "--edit" ]; then
@@ -181,18 +192,18 @@ elif [ $# -ge 1 ]; then
 
     # If specifying to delete
     else
-      rm -rf `echo $RECORDPATH`
+      rm `echo $RECORDPATH`
     fi
 
     PROCESS_STDIN=false  # indicate we shouldn't process stdin
 
   else
-    get_recordname_path $1
+    RECORDPATH=$(get_recordname_path $1)
     if [ "$RECORDPATH" != "" ]; then
       exec_record "$RECORDPATH"
 
       PROCESS_STDIN=false  # indicate we shouldn't process stdin
-
+    
     else
       echo "Invalid Arguments. See --help"
       exit 1

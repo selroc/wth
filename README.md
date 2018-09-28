@@ -13,7 +13,7 @@ _In Progress..._
 ```bash
 $ cat <<EOF | wth.sh
 # I like to put titles here.
-# Is a comment since wth stores records in bash scripts (so you can run them)
+# This is a comment since wth stores records in bash scripts (so you can run them)
 echo "Command commands in cat to command what Cathy calculated"
 python -c "print(5 / 2.0)"
 EOF
@@ -34,7 +34,7 @@ $ wth.sh -l
 (2018/08/15 at 10:14:35) untitled:            (record-2018-08-15T10:14:35-untitled.sh)
 --------------------------------------------
 # I like to put titles here.
-# Is a comment since wth stores records in bash scripts (so you can run them)
+# This is a comment since wth stores records in bash scripts (so you can run them)
 echo "Command commands in cat to command what Cathy calculated"
 
 (2018/08/15 at 10:15:05) wonder_whatever:     (record-2018-08-15T10:15:05-wonder_whatever.sh)
@@ -44,7 +44,7 @@ echo "Walter was wondering whatever... "
 ```
 
 ### Executing records
-You can run a specific record by it's name using `wth recordname`, where recordname is the name of the record to execute. Comments inside the program are printed out. If there are duplicates, a prompt will popup with your options. Listing a record `-l` can help you find which record you want.
+You can run a specific record by it's name using `wth recordname`, where recordname is the name of the record to execute. Comments inside the program are printed out. If there are duplicates, a prompt will popup with your options. Listing a record with `-l` can help you find which record you want.
 ```bash
 $ wth.sh wonder_whatever
 Walter was wondering whatever...
@@ -56,13 +56,13 @@ Walter was wondering whatever...
 ```
 
 ### Editing records
-You can edit a existing record by doing `wth -e recordname`, where recordname is (you guessed it), the name of the record you want to edit. It opens the record in whatever editor is set in `$EDITOR`. If that enviroment variable is not set, it opens the record in vim. You can add the following to your shell configuration (`~/.bashrc`): `export EDITOR="vim"` to set one.
+You can edit a existing record by doing `wth -e recordname`, where recordname is (you guessed it), the name of the record you want to edit. It opens the record in whatever editor is set in `$EDITOR`. If that enviroment variable is not set, it opens the record in vim. You can add the following to your shell configuration (`~/.bashrc`): `export EDITOR="vim"` to set one. If there are duplicates, a prompt will popup with your options. You can also use `*` to edit all duplicates.
 ```
 $ wth -e wonder_whatever
 ```
 
 ### Deleting records
-You can delete records two ways: using `wth -d name` or by manually deleting a record in ~/wth. If there are duplicates, a prompt will popup with your options.
+You can delete records two ways: using `wth -d name` or by manually deleting a record in ~/wth. If there are duplicates, a prompt will popup with your options. You can also use `*` to delete all duplicates.
 ```bash
 $ wth.sh -d untitled
 $
@@ -73,11 +73,11 @@ If you want to launch a random record, you can do so by running `wth.sh -r` or `
 ```bash
 $ wth.sh -r
 # I like to put titles here.
-# Is a comment since wth stores records in bash scripts (so you can run them)
+# This is a comment since wth stores records in bash scripts (so you can run them)
 Command commands in cat to command what Cathy calculated
 2.5
 ```
 
 
 ### Contributing
-`wth` is simple and dumb. Help make it better by opening issues and submitting merge requests. I have no contribution guidelines or rules besides being respectful. You know the deal.
+`wth` is simple and dumb. Help make it better by opening issues and submitting merge requests. I have no contribution guidelines or rules besides being respectful. You know the deal. Contributions of all kinds are appreciated.
