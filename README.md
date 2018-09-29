@@ -27,6 +27,12 @@ $ "echo \"Walter was wondering whatever... \"" | wth.sh -n "Wonder Whatever"
 Added record to file: ~/wth/record-2018-08-15T10:15:05-wonder_whatever.sh
 ```
 
+You can also tag your records for better organization (MacOS Only). Tags are seperated by commas:
+```bash
+$ "echo \"Walter was wondering whatver... \"" | wth.sh -n "Wonder Whatever" -t wondering,whatever
+Added the following tags to the file: wondering, whatever
+```
+
 ### Listing your Records
 You can see the records listed using `wth.sh -l` or `wth.sh --list`. Preview of records is capped at 3. Lines are not executed.
 ```bash
@@ -37,6 +43,15 @@ $ wth.sh -l
 # This is a comment since wth stores records in bash scripts (so you can run them)
 echo "Command commands in cat to command what Cathy calculated"
 
+(2018/08/15 at 10:15:05) wonder_whatever:     (record-2018-08-15T10:15:05-wonder_whatever.sh)
+--------------------------------------------
+echo "Walter was wondering whatever... "
+
+```
+
+You can also filter out records that don't contain any of specified tags. Multiple tags results in showing all records that contain any of the singular tags, as apposed to records with all those tags.
+```bash
+$ wth.sh -l -t whatever
 (2018/08/15 at 10:15:05) wonder_whatever:     (record-2018-08-15T10:15:05-wonder_whatever.sh)
 --------------------------------------------
 echo "Walter was wondering whatever... "
@@ -61,15 +76,20 @@ You can edit a existing record by doing `wth -e recordname`, where recordname is
 $ wth -e wonder_whatever
 ```
 
+### Editing tags (MacOS Only)
+You can append specific tags to a record by using `wth.sh -e recordname -t tagtoappend`, where the tags you want to append are seperated by a comma. As well as appending tags, you can also delete specific tags by doing `wth.sh -d recordname -t tagtodelete`.
+```
+$ wth -d untitled -t useless,todo
+```
+
 ### Deleting records
 You can delete records two ways: using `wth -d name` or by manually deleting a record in ~/wth. If there are duplicates, a prompt will popup with your options. You can also use `*` to delete all duplicates.
 ```bash
 $ wth.sh -d untitled
-$
 ```
 
 ### Randomly executing records
-If you want to launch a random record, you can do so by running `wth.sh -r` or `wth.sh --random`. Doing so will result in a random record being executed. Comments inside the program are also printed out. This is useful if you're bored.
+If you want to launch a random record, you can do so by running `wth.sh -r` or `wth.sh --random`. Doing so will result in a random record being executed. Comments inside the program are also printed out. Adding a -t with tags following the flag causes records to only execute if it matches any of the tags.
 ```bash
 $ wth.sh -r
 # I like to put titles here.
