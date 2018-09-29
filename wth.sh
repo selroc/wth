@@ -44,7 +44,7 @@ strip_name() {
   CLEAN=${1//_/}  # strip underscores
   CLEAN=${CLEAN// /_}  # replace spaces with underscores
   CLEAN=${CLEAN//[^a-zA-Z0-9_]/}   # remove all but alphanumeric or underscore
-  return "`echo $CLEAN | tr A-Z a-z`"  # convert to lowercase
+  echo "`echo $CLEAN | tr A-Z a-z`"  # convert to lowercase
 } 
 
 # Returns whether the given tags associated with a file contain any given tags
@@ -236,6 +236,7 @@ elif [ $# -ge 1 ]; then
 
     # If specifying to edit
     if [ "$1" == "-e" ] || [ "$1" == "--edit" ]; then
+
       # edit the tags
       if [ "$TAGS" != "" ]; then
         ./tagit.sh "$RECORDPATH" -a $TAGS
@@ -250,7 +251,7 @@ elif [ $# -ge 1 ]; then
 
     # If specifying to delete
     elif [ "$TAGS" != "" ]; then
-      ./tagit.sh "$WTH_LOCATION/$RECORDPATH.sh" -d $TAGS
+      ./tagit.sh "$RECORDPATH" -d $TAGS
     
     else
       rm `echo $RECORDPATH`
