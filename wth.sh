@@ -9,7 +9,15 @@
 WTH_LOCATION=~/wth
 RECORD_NAME="record-`date +%FT%T`"
 DEFAULT_NAME="untitled"
+COLOR=true
 
+# Show color if terminal is defined and color is true
+if [ ! -z ${TERM+x} ] || [ "$TERM" != "" ] && $COLOR; then
+  GRAY='\033[0;37m'
+  GREEN='\033[0;32m'
+  RED='\033[0;31m'
+  CLEAR='\033[0m'
+fi
 
 # Exec a record
 exec_record() {
@@ -34,7 +42,7 @@ place_record_metadata() {
       RECORD_DATES+=("`echo "$NAME" | sed 's/record-//' \
                      | sed "s/-${RECORD_NAMES[${#RECORD_NAMES[@]}-1]}.sh//" \
                      | sed 's/T/ at /' | sed 's;-;/;g'`")
-      RECORD_TAGS+=("`./tagit.sh $f`")
+      RECORD_TAGS+=("`$WTH_LOCATION/tagit.sh $f`")
     done
 }
 
@@ -45,7 +53,7 @@ strip_name() {
   CLEAN=${CLEAN// /_}  # replace spaces with underscores
   CLEAN=${CLEAN//[^a-zA-Z0-9_]/}   # remove all but alphanumeric or underscore
   echo "`echo $CLEAN | tr A-Z a-z`"  # convert to lowercase
-} 
+}
 
 # Returns whether the given tags associated with a file contain any given tags
 # given in the tags to match.
@@ -71,7 +79,7 @@ elementIn() {
 }
 
 
-# Prints out the records ordered by date, giving the recordname and a preview. 
+# Prints out the records ordered by date, giving the recordname and a preview.
 # If tags are given, records are filtered such that they must match one of the
 # tags
 PREVIEW_LENGTH=3
@@ -83,19 +91,21 @@ list_records() {
     # if record tags contain any specified tags if applicable
     containsTags=""
     if [[ $1 == "" ]] || inTags "${RECORD_TAGS[$i]}" "${@:1}"; then
-      printf "%-23s %-25s\n" "(${RECORD_DATES[$i]})" "${RECORD_NAMES[$i]}:"
+      printf "%-23s ${GREEN}%-25s${CLEAR}\n" "(${RECORD_DATES[$i]})" "${RECORD_NAMES[$i]}:"
 
       # print first 2 lines of record
       echo "---"
-      cat "${RECORD_FULL_PATHS[$i]}" | head -$PREVIEW_LENGTH
+      while read record; do
+        echo -e "${GRAY}$record${CLEAR}"
+      done < "${RECORD_FULL_PATHS[$i]}" | head -$PREVIEW_LENGTH
       echo ""
     fi
   done
 }
 
 # Gets the given record name and queries which record if there are duplicates,
-# returning the record path. If the user inputs '*' for the given duplicates, 
-# returns all valid values. If the user fails to correctly choose a duplicate, 
+# returning the record path. If the user inputs '*' for the given duplicates,
+# returns all valid values. If the user fails to correctly choose a duplicate,
 # returns a empty recordname.
 get_recordname_path() {
     if [ -z "$1" ]; then
@@ -170,7 +180,7 @@ end end of any of the optional arguments causes tags to be added, or refines
 the results of the optional argument.
 
 optional arguments:
-    -n, --name            Specifes the name of the new record. If -t is 
+    -n, --name            Specifes the name of the new record. If -t is
                           invoked, the following tags are added.
     -l, --list            Lists all the records. If -t is invoked, refines the
                           results returned to show those with any of the given
@@ -182,8 +192,8 @@ optional arguments:
                           environment variable \$EDITOR. If the variable is not
                           set, opens in vim. If -t is invoked, the following
                           tags are added and the record is not opened.
-    -t, --tags            MacOS Only. Sets/refines the following tags to the 
-                          argument to the left of it. The -t flag must occur 
+    -t, --tags            MacOS Only. Sets/refines the following tags to the
+                          argument to the left of it. The -t flag must occur
                           last in the arguments. Tags must be comma seperated.
 EOF
 }
@@ -200,7 +210,7 @@ elif [ $# -ge 1 ]; then
   # check for tags in the second and third argument
   if [ "$2" == "-t" ] || [ "$2" == "-tags" ]; then
     TAGS="${@:3}"
-  
+
   elif [ "$3" == "-t" ] || [ "$3" == "-tags" ]; then
     TAGS="${@:4}"
   fi
@@ -239,7 +249,7 @@ elif [ $# -ge 1 ]; then
 
       # edit the tags
       if [ "$TAGS" != "" ]; then
-        ./tagit.sh "$RECORDPATH" -a $TAGS
+        $WTH_LOCATION/tagit.sh "$RECORDPATH" -a $TAGS
         echo "Added the following tags: $TAGS"
 
       # edit the record in the default editor
@@ -251,8 +261,8 @@ elif [ $# -ge 1 ]; then
 
     # If specifying to delete
     elif [ "$TAGS" != "" ]; then
-      ./tagit.sh "$RECORDPATH" -d $TAGS
-    
+      $WTH_LOCATION/tagit.sh "$RECORDPATH" -d $TAGS
+
     else
       rm `echo $RECORDPATH`
     fi
@@ -262,20 +272,25 @@ elif [ $# -ge 1 ]; then
   elif [ "$1" == "-n" ] || [ "$1" == "--name" ]; then
     # if no second arg
     if [ -z "$2" ]; then
-      echo "No record name supplied"
+      echo -e "${RED}No record name supplied${CLEAR}"
       exit 1
     fi
 
     DEFAULT_NAME=$(strip_name $2)
 
   else
+    if [ "$2" == "" ]; then
+        echo -e "${RED}No Arguments Provided. See --help${CLEAR}"
+        exit 1
+    fi
+
     RECORDPATH=$(get_recordname_path $1)
     if [ "$RECORDPATH" != "" ]; then
       exec_record "$RECORDPATH"
       exit 0
-    
+
     else
-      echo "Invalid Arguments. See --help"
+      echo -e "${RED}Invalid Arguments. See --help${CLEAR}"
       exit 1
     fi
   fi
@@ -287,7 +302,7 @@ chmod +x "$WTH_LOCATION/$RECORD_NAME-$DEFAULT_NAME.sh"
 echo "Added record to file: $WTH_LOCATION/$RECORD_NAME-$DEFAULT_NAME.sh"
 
 if [ "$TAGS" != "" ]; then
-  ./tagit.sh "$WTH_LOCATION/$RECORD_NAME-$DEFAULT_NAME.sh" -s $TAGS
+  $WTH_LOCATION/tagit.sh "$WTH_LOCATION/$RECORD_NAME-$DEFAULT_NAME.sh" -s $TAGS
   echo "Added the following tags to the file: $TAGS"
 fi
 
