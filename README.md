@@ -1,9 +1,6 @@
 # What the hell was I working on (`wth`):
 
 A program that lets you record notes/actions about what you're doing in a organized and labeled fashion. Records can then be run/viewed later to see your notes. Each record is stored as a bash script so actions can be taken when executing the record.
-_In Progress..._
-
-**TL;DR:** A wrapper script that makes editing, listing, adding and deleting bash scripts for the purpose of record keeping easier.
 
 ### Skip the fluff:
 `wth.sh --help`

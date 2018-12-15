@@ -1,13 +1,18 @@
 #!/bin/bash
 # TagIt: A program that lets you easily modify or view MacOS tags.
 
+# Only works in MacOS
+if [ "$(uname)" != "Darwin" ]; then
+    exit 1
+fi
+
 # Given a file, returns all the tags associated with the file
 getTags() {
   # return tags seperated by a comma and a space
-  echo "`mdls -raw -name kMDItemUserTags $1 | grep -v '(\|)' | xargs`" 
+  echo "`mdls -raw -name kMDItemUserTags $1 | grep -v '(\|)' | xargs`"
 }
 
-# Given a file, sets the given tags seperated by a comma, overriding all 
+# Given a file, sets the given tags seperated by a comma, overriding all
 # current tags
 setTags() {
   PLIST_DATA='<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
@@ -27,7 +32,7 @@ setTags() {
 }
 
 if [ "$1" == "--help" ]; then
-  cat <<EOF 
+  cat <<EOF
 usage: tagit.sh <file>
    or  tagit.sh <file> [ -a | -d | -s ] <tag>, <tag2> ...
 
