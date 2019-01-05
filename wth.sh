@@ -29,10 +29,14 @@ RECORD_FULL_PATHS=()
 RECORD_FILENAMES=()
 RECORD_NAMES=()
 RECORD_DATES=()
-RECORD_TAGS=()
 # Puts all the records and their properties in arrays above
 place_record_metadata() {
-    for f in $WTH_LOCATION/record*.sh; do
+    if [ ! -z "$1" ] && command -v tag > /dev/null; then
+        SEARCH_METHOD=`tag -m "$1" ~/wth/record*.sh`
+    else
+        SEARCH_METHOD=`ls -1 $WTH_LOCATION/record*.sh`
+    fi
+    for f in $SEARCH_METHOD; do
       RECORD_FULL_PATHS+=("$f")
       NAME=`basename "$f"`
       RECORD_FILENAMES+=("$NAME")
@@ -42,7 +46,6 @@ place_record_metadata() {
       RECORD_DATES+=("`echo "$NAME" | sed 's/record-//' \
                      | sed "s/-${RECORD_NAMES[${#RECORD_NAMES[@]}-1]}.sh//" \
                      | sed 's/T/ at /' | sed 's;-;/;g'`")
-      RECORD_TAGS+=("`$WTH_LOCATION/tagit.sh $f`")
     done
 }
 
@@ -85,21 +88,18 @@ elementIn() {
 PREVIEW_LENGTH=3
 list_records() {
   # Set all the arrays that contain record information
-  place_record_metadata
+  place_record_metadata $1
 
   for ((i=0; i<${#RECORD_FULL_PATHS[@]}; i++)); do
     # if record tags contain any specified tags if applicable
-    containsTags=""
-    if [[ $1 == "" ]] || inTags "${RECORD_TAGS[$i]}" "${@:1}"; then
-      printf "%-23s ${GREEN}%-25s${CLEAR}\n" "(${RECORD_DATES[$i]})" "${RECORD_NAMES[$i]}:"
+    printf "%-23s ${GREEN}%-25s${CLEAR}\n" "(${RECORD_DATES[$i]})" "${RECORD_NAMES[$i]}:"
 
-      # print first 2 lines of record
-      echo "---"
-      while read record; do
-        echo -e "${GRAY}$record${CLEAR}"
-      done < "${RECORD_FULL_PATHS[$i]}" | head -$PREVIEW_LENGTH
-      echo ""
-    fi
+    # print first 2 lines of record
+    echo "---"
+    while read record; do
+      echo -e "${GRAY}$record${CLEAR}"
+    done < "${RECORD_FULL_PATHS[$i]}" | head -$PREVIEW_LENGTH
+    echo ""
   done
 }
 
@@ -248,8 +248,8 @@ elif [ $# -ge 1 ]; then
     if [ "$1" == "-e" ] || [ "$1" == "--edit" ]; then
 
       # edit the tags
-      if [ "$TAGS" != "" ]; then
-        $WTH_LOCATION/tagit.sh "$RECORDPATH" -a $TAGS
+      if [ "$TAGS" != "" ] && command -v tag > /dev/null; then
+        tag -a $TAGS "$RECORDPATH"
         echo "Added the following tags: $TAGS"
 
       # edit the record in the default editor
@@ -260,8 +260,8 @@ elif [ $# -ge 1 ]; then
       fi
 
     # If specifying to delete
-    elif [ "$TAGS" != "" ]; then
-      $WTH_LOCATION/tagit.sh "$RECORDPATH" -d $TAGS
+    elif [ "$TAGS" != "" ] && command -v tag; then
+      tag -r $TAGS "$RECORDPATH"
 
     else
       rm `echo $RECORDPATH`
@@ -301,8 +301,8 @@ cat >> "$WTH_LOCATION/$RECORD_NAME-$DEFAULT_NAME.sh"
 chmod +x "$WTH_LOCATION/$RECORD_NAME-$DEFAULT_NAME.sh"
 echo "Added record to file: $WTH_LOCATION/$RECORD_NAME-$DEFAULT_NAME.sh"
 
-if [ "$TAGS" != "" ]; then
-  $WTH_LOCATION/tagit.sh "$WTH_LOCATION/$RECORD_NAME-$DEFAULT_NAME.sh" -s $TAGS
+if [ "$TAGS" != "" ] && command -v tag > /dev/null; then
+  tag -s $TAGS "$WTH_LOCATION/$RECORD_NAME-$DEFAULT_NAME.sh"
   echo "Added the following tags to the file: $TAGS"
 fi
 

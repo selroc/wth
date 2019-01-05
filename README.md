@@ -1,6 +1,6 @@
 # What the hell was I working on (`wth`):
 
-A program that lets you record notes/actions about what you're doing in a organized and labeled fashion. Records can then be run/viewed later to see your notes. Each record is stored as a bash script so actions can be taken when executing the record.
+A program that lets you record notes/actions about what you're doing in a organized and labeled fashion. Records can then be executed/viewed later to see your notes. Each record is stored as a bash script so it can be executed. This requires notes to start with a `#` at the front.
 
 ### Skip the fluff:
 `wth.sh --help`
@@ -74,7 +74,7 @@ $ wth -e wonder_whatever
 ```
 
 ### Editing tags (MacOS Only)
-You can append specific tags to a record by using `wth.sh -e recordname -t tagtoappend`, where the tags you want to append are seperated by a comma. As well as appending tags, you can also delete specific tags by doing `wth.sh -d recordname -t tagtodelete`.
+To use tags, you must have [tag]()https://github.com/jdberry/tag installed (`brew install tag`). You can then append specific tags to a record by using `wth.sh -e recordname -t tagtoappend`, where the tags you want to append are seperated by a comma. As well as appending tags, you can also delete specific tags by doing `wth.sh -d recordname -t tagtodelete`.
 ```
 $ wth -d untitled -t useless,todo
 ```
