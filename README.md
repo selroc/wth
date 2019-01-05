@@ -74,7 +74,7 @@ $ wth -e wonder_whatever
 ```
 
 ### Editing tags (MacOS Only)
-To use tags, you must have [tag]()https://github.com/jdberry/tag installed (`brew install tag`). You can then append specific tags to a record by using `wth.sh -e recordname -t tagtoappend`, where the tags you want to append are seperated by a comma. As well as appending tags, you can also delete specific tags by doing `wth.sh -d recordname -t tagtodelete`.
+To use tags, you must have [tag](https://github.com/jdberry/tag) installed (`brew install tag`). You can then append specific tags to a record by using `wth.sh -e recordname -t tagtoappend`, where the tags you want to append are seperated by a comma. As well as appending tags, you can also delete specific tags by doing `wth.sh -d recordname -t tagtodelete`.
 ```
 $ wth -d untitled -t useless,todo
 ```
