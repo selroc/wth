@@ -27,28 +27,29 @@ exec_record() {
   sh $1
 }
 
-RECORD_FULL_PATHS=()
-RECORD_FILENAMES=()
-RECORD_NAMES=()
-RECORD_DATES=()
-# Puts all the records and their properties in arrays above
-place_record_metadata() {
-    local search_method=`ls -1 $WTH_LOCATION/record*.sh`
-    if [ ! -z "$1" ] && command -v tag > /dev/null; then
-        search_method=`tag -m "$1" ~/wth/record*.sh`
-    fi
 
-    for f in $search_method; do
-      local name=`basename "$f"`
-      RECORD_FULL_PATHS+=("$f")
-      RECORD_FILENAMES+=("$name")
-      RECORD_NAMES+=("`echo "$name" | awk -F '-' '{ print $5 }' \
-                     | sed 's/\.sh//'`")
-      # echo the full filename, remove the name.sh, replace T in iso std w/ at
-      RECORD_DATES+=("`echo "$name" | sed 's/record-//' \
-                     | sed "s/-${RECORD_NAMES[${#RECORD_NAMES[@]}-1]}.sh//" \
-                     | sed 's/T/ at /' | sed 's;-;/;g'`")
-    done
+# Puts all the records and their properties in arrays below
+place_record_metadata() {
+  RECORD_FULL_PATHS=()
+  RECORD_FILENAMES=()
+  RECORD_NAMES=()
+  RECORD_DATES=()
+  search_method=`ls -1 $WTH_LOCATION/record*.sh`
+  if [ ! -z "$1" ] && command -v tag > /dev/null; then
+      search_method=`tag -m "$1" ~/wth/record*.sh`
+  fi
+
+  for f in $search_method; do
+    local name=`basename "$f"`
+    RECORD_FULL_PATHS+=("$f")
+    RECORD_FILENAMES+=("$name")
+    RECORD_NAMES+=("`echo "$name" | awk -F '-' '{ print $5 }' \
+                    | sed 's/\.sh//'`")
+    # echo the full filename, remove the name.sh, replace T in iso std w/ at
+    RECORD_DATES+=("`echo "$name" | sed 's/record-//' \
+                    | sed "s/-${RECORD_NAMES[${#RECORD_NAMES[@]}-1]}.sh//" \
+                    | sed 's/T/ at /' | sed 's;-;/;g'`")
+  done
 }
 
 # Strips a given name to remove unwanted characters and returns it via echo
@@ -72,7 +73,7 @@ list_records() {
     local tags=""
 
     if command -v tag > /dev/null; then
-      tags="`tag -lN $full_path | sed 's/, */, /g'`"
+      tags="`tag -lN $full_path`"
     fi
     # if record tags contain any specified tags if applicable
     printf "%-23s ${GREEN}%s${CLEAR}: ${BLUE}%s${CLEAR}\n" "(${RECORD_DATES[$i]})" \
@@ -91,50 +92,53 @@ list_records() {
 # returning the record path. If the user inputs '*' for the given duplicates,
 # returns all valid values. If the user fails to correctly choose a duplicate,
 # returns a empty recordname.
-RECORDNAME_PATH=""
 get_recordname_path() {
-    if [ -z "$1" ]; then
-      echo "No record name specified"
-      exit 1
+  RECORDNAME_PATH=""
+  if [ -z "$1" ]; then
+    echo "No record name specified"
+    exit 1
+  fi
+
+  local found_dates=()
+  local found_names=()
+  local found_paths=()
+
+  # loop through records and see if we can find the one specified
+  place_record_metadata
+  for ((i=0; i<${#RECORD_FILENAMES[@]}; i++)); do
+    if [ $1 == ${RECORD_NAMES[$i]} ]; then
+      found_dates+=("${RECORD_DATES[$i]}")
+      found_names+=("${RECORD_NAMES[$i]}")
+      found_paths+=("${RECORD_FULL_PATHS[$i]}")
     fi
+  done
 
-    local found_dates=()
-    local found_names=()
-    local found_paths=()
+  if [ ${#found_names[@]} -eq 0 ]; then
+    echo "Could not find record $1, try running wth.sh -l and providing" \
+          "the resulting name shown after the date."
+    exit 1
 
-    # loop through records and see if we can find the one specified
-    place_record_metadata
-    for ((i=0; i<${#RECORD_FILENAMES[@]}; i++)); do
-      if [ $1 == ${RECORD_NAMES[$i]} ]; then
-        found_dates+=("${RECORD_DATES[$i]}")
-        found_names+=("${RECORD_NAMES[$i]}")
-        found_paths+=("${RECORD_FULL_PATHS[$i]}")
-      fi
+  elif [ ${#found_names[@]} -gt 1 ]; then
+    echo "Found the following results:"
+    for i in "${!found_names[@]}"; do
+      printf '%s: (%s) %s\n' "$i" "${found_dates[$i]}" "${found_names[$i]}"
     done
 
-    if [ ${#found_names[@]} -eq 0 ]; then
-      echo "Could not find record $1, try running wth.sh -l and providing" \
-           "the resulting name shown after the date."
-      exit 1
-
-    elif [ ${#found_names[@]} -gt 1 ]; then
-      echo "Found the following results:"
-      for i in "${!found_names[@]}"; do
-        printf '%s: (%s) %s\n' "$i" "${found_dates[$i]}" "${found_names[$i]}"
-      done
-
-      echo "Choose which one to take your action on (* for all above): "
-      read input
-      if [ "$input" = "*" ]; then
-          RECORDNAME_PATH="${found_paths[*]}"
-      else
-          RECORDNAME_PATH=${found_paths[$input]}
-      fi
-
-    # if there's only one thing found
+    echo "Choose which one to take your action on (* for all above): "
+    read input
+    if [ "$input" = "*" ]; then
+        RECORDNAME_PATH="${found_paths[*]}"
+    elif [ ! -z ${found_paths[$input]} ]; then
+        RECORDNAME_PATH=${found_paths[$input]}
     else
-      RECORDNAME_PATH=${found_paths[0]}
+      echo "Not valid selection, quiting."
+      exit 1
     fi
+
+  # if there's only one thing found
+  else
+    RECORDNAME_PATH=${found_paths[0]}
+  fi
 }
 
 elementIn() {
@@ -147,6 +151,7 @@ elementIn() {
 print_help() {
   cat <<EOF
 usage: wth.sh <recordname-to-open>
+   or  wth.sh <recordname-to-modify> [flags] <tags>
    or  wth.sh <recordname-to-modify> [modifier]
    or  wth.sh <recordname-to-modify> [modifier] [flags] <tags>
    or  wth.sh [action]
@@ -194,27 +199,29 @@ if elementIn "$1" "${ACTIONS[@]}"; then
   esac
 
 elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
+  RECORD_NAME=$1
 
   case "$2" in
     "--edit" | "-e")
-      get_recordname_path $1
+      get_recordname_path $RECORD_NAME
       # edit the record in the default editor
       if [ "$EDITOR" != "" ]; then
         $EDITOR `echo $RECORDNAME_PATH`
       else
         vim `echo $RECORDNAME_PATH`
       fi
+      shift
       ;;
     "--delete" | "-d")
-      get_recordname_path $1
+      get_recordname_path $RECORD_NAME
       rm $RECORDNAME_PATH
       exit 0
       ;;
     "--stdin" | "-S")
-      RECORD_NAME=$1
       cat >> "$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
       chmod +x "$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
       echo "Added record to file: $WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
+      shift
       ;;
   esac
 
@@ -224,16 +231,16 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
       echo "`tag` is not installed on this machine (tag is only on MacOS)"
     fi
     tags="${@:3}"
-    get_recordname_path $1
+    get_recordname_path $RECORD_NAME
 
     case "$2" in
       "--append" | "-a")
         tag -a $tags $RECORDNAME_PATH
-        echo "Appended the following tags to the file: $tags"
+        echo "Appended the following tags on $RECORD_NAME: $tags"
         ;;
       "--set" | "-s")
         tag -s $tags $RECORDNAME_PATH
-        echo "Set the following tags on the file: $tags"
+        echo "Set the following tags on $RECORD_NAME: $tags"
         ;;
     esac
   fi
