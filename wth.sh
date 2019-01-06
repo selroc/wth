@@ -36,7 +36,7 @@ place_record_metadata() {
   RECORD_DATES=()
   search_method=`ls -1 $WTH_LOCATION/record*.sh`
   if [ ! -z "$1" ] && command -v tag > /dev/null; then
-      search_method=`tag -m "$1" ~/wth/record*.sh`
+      search_method=`tag -m "$1" $WTH_LOCATION/record*.sh`
   fi
 
   for f in $search_method; do
@@ -203,10 +203,17 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
 
   case "$2" in
     "--edit" | "-e")
-      get_recordname_path $RECORD_NAME
+      place_record_metadata
+      if elementIn $RECORD_NAME $RECORD_NAMES; then
+        get_recordname_path $RECORD_NAME
+      else
+        RECORDNAME_PATH="$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
+        echo "Added record to file: $WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
+      fi
       # edit the record in the default editor
       if [ "$EDITOR" != "" ]; then
         $EDITOR `echo $RECORDNAME_PATH`
+        chmod +x "$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
       else
         vim `echo $RECORDNAME_PATH`
       fi
