@@ -7,8 +7,9 @@
 # when executing the record.
 
 WTH_LOCATION=~/wth
-RECORD_NAME="record-`date +%FT%T`"
-DEFAULT_NAME="untitled"
+RECORD_PREFIX="record-`date +%FT%T`"
+RECORD_NAME="untitled"
+PREVIEW_LENGTH=3
 COLOR=true
 
 # Show color if terminal is defined and color is true
@@ -16,6 +17,7 @@ if [ ! -z ${TERM+x} ] || [ "$TERM" != "" ] && $COLOR; then
   GRAY='\033[0;37m'
   GREEN='\033[0;32m'
   RED='\033[0;31m'
+  BLUE='\033[0;36m'
   CLEAR='\033[0m'
 fi
 
@@ -32,67 +34,48 @@ RECORD_DATES=()
 # Puts all the records and their properties in arrays above
 place_record_metadata() {
     if [ ! -z "$1" ] && command -v tag > /dev/null; then
-        SEARCH_METHOD=`tag -m "$1" ~/wth/record*.sh`
+        search_method=`tag -m "$1" ~/wth/record*.sh`
     else
-        SEARCH_METHOD=`ls -1 $WTH_LOCATION/record*.sh`
+        search_method=`ls -1 $WTH_LOCATION/record*.sh`
     fi
-    for f in $SEARCH_METHOD; do
+    for f in $search_method; do
+      name=`basename "$f"`
       RECORD_FULL_PATHS+=("$f")
-      NAME=`basename "$f"`
-      RECORD_FILENAMES+=("$NAME")
-      RECORD_NAMES+=("`echo "$NAME" | awk -F '-' '{ print $5 }' \
+      RECORD_FILENAMES+=("$name")
+      RECORD_NAMES+=("`echo "$name" | awk -F '-' '{ print $5 }' \
                      | sed 's/\.sh//'`")
       # echo the full filename, remove the name.sh, replace T in iso std w/ at
-      RECORD_DATES+=("`echo "$NAME" | sed 's/record-//' \
+      RECORD_DATES+=("`echo "$name" | sed 's/record-//' \
                      | sed "s/-${RECORD_NAMES[${#RECORD_NAMES[@]}-1]}.sh//" \
                      | sed 's/T/ at /' | sed 's;-;/;g'`")
     done
 }
 
-# Strips a given name to remove unwanted characters and returns it
+# Strips a given name to remove unwanted characters and returns it via echo
 strip_name() {
   # Redefine the name of the record.
-  CLEAN=${1//_/}  # strip underscores
-  CLEAN=${CLEAN// /_}  # replace spaces with underscores
-  CLEAN=${CLEAN//[^a-zA-Z0-9_]/}   # remove all but alphanumeric or underscore
-  echo "`echo $CLEAN | tr A-Z a-z`"  # convert to lowercase
+  clean=${1//_/}  # strip underscores
+  clean=${clean// /_}  # replace spaces with underscores
+  clean=${clean//[^a-zA-Z0-9_]/}   # remove all but alphanumeric or underscore
+  echo "`echo $clean | tr A-Z a-z`"  # convert to lowercase
 }
-
-# Returns whether the given tags associated with a file contain any given tags
-# given in the tags to match.
-inTags() {
-  IFS=',' read -ra TAGS_WANTED <<< "$2"
-  IFS=',' read -ra TAGS_GIVEN <<< "$1"
-
-  for given_tag in "${TAGS_GIVEN[@]}"; do
-    if elementIn "`echo $given_tag | xargs`" "${TAGS_WANTED[@]}"; then
-      return 0
-    fi
-  done
-
-  return 1
-}
-
-# Returns whether a given tag matches any given array of tags.
-elementIn() {
-  local tag match="$1"
-  shift
-  for tag; do [[ "$tag" == "$match" ]] && return 0; done
-  return 1
-}
-
 
 # Prints out the records ordered by date, giving the recordname and a preview.
 # If tags are given, records are filtered such that they must match one of the
 # tags
-PREVIEW_LENGTH=3
 list_records() {
   # Set all the arrays that contain record information
   place_record_metadata $1
 
   for ((i=0; i<${#RECORD_FULL_PATHS[@]}; i++)); do
+    full_path=${RECORD_FULL_PATHS[$i]}
+
+    if command -v tag > /dev/null; then
+      tags="`tag -lN $full_path | sed 's/, */, /g'`"
+    fi
     # if record tags contain any specified tags if applicable
-    printf "%-23s ${GREEN}%-25s${CLEAR}\n" "(${RECORD_DATES[$i]})" "${RECORD_NAMES[$i]}:"
+    printf "%-23s ${GREEN}%s${CLEAR}: ${BLUE}%s${CLEAR}\n" "(${RECORD_DATES[$i]})" \
+           "${RECORD_NAMES[$i]}" "$tags"
 
     # print first 2 lines of record
     echo "---"
@@ -107,60 +90,50 @@ list_records() {
 # returning the record path. If the user inputs '*' for the given duplicates,
 # returns all valid values. If the user fails to correctly choose a duplicate,
 # returns a empty recordname.
+RECORDNAME_PATH=""
 get_recordname_path() {
     if [ -z "$1" ]; then
       echo "No record name specified"
       exit 1
     fi
 
-    NEW_RECORD_PATH=""
-    SPECIFIED_NAME=$1
-    FOUND_DATES=()
-    FOUND=()
-    FOUND_PATH=()
+    found_dates=()
+    found_names=()
+    found_paths=()
 
     # loop through records and see if we can find the one specified
     place_record_metadata
     for ((i=0; i<${#RECORD_FILENAMES[@]}; i++)); do
-
-      # check if the name is right
-      if [ $SPECIFIED_NAME == ${RECORD_NAMES[$i]} ]; then
-        # record the results
-        FOUND_DATES+=("${RECORD_DATES[$i]}")
-        FOUND+=("${RECORD_NAMES[$i]}")
-        FOUND_PATH+=("${RECORD_FULL_PATHS[$i]}")
+      if [ $1 == ${RECORD_NAMES[$i]} ]; then
+        found_dates+=("${RECORD_DATES[$i]}")
+        found_names+=("${RECORD_NAMES[$i]}")
+        found_paths+=("${RECORD_FULL_PATHS[$i]}")
       fi
     done
 
-    # if could not find record
-    if [ ${#FOUND[@]} -eq 0 ]; then
+    if [ ${#found_names[@]} -eq 0 ]; then
       echo "Could not find specified record name, try running wth.sh -l and" \
            "providing the resulting name shown after the date."
       exit 1
 
-    # if multiple things found
-    elif [ ${#FOUND[@]} -gt 1 ]; then
-      # there are multiple results, print them out
+    elif [ ${#found_names[@]} -gt 1 ]; then
       echo "Found the following results:"
-      for i in "${!FOUND[@]}"; do
-        printf '%s: (%s) %s\n' "$i" "${FOUND_DATES[$i]}" "${FOUND[$i]}"
+      for i in "${!found_names[@]}"; do
+        printf '%s: (%s) %s\n' "$i" "${found_dates[$i]}" "${found_names[$i]}"
       done
 
-      # ask the user which one they want
-      echo "Choose which one to take your action on: "
+      echo "Choose which one to take your action on (* for all above): "
       read input
       if [ "$input" = "*" ]; then
-          NEWRECORDPATH="${FOUND_PATH[*]}"
+          RECORDNAME_PATH="${found_paths[*]}"
       else
-          NEW_RECORD_PATH=${FOUND_PATH[$input]}
+          RECORDNAME_PATH=${found_paths[$input]}
       fi
 
     # if there's only one thing found
-    elif [ ${#FOUND[@]} -eq 1 ]; then
-      NEW_RECORD_PATH=${FOUND_PATH[0]}
+    else
+      RECORDNAME_PATH=${found_paths[0]}
     fi
-
-    echo $NEW_RECORD_PATH
 }
 
 print_help() {
@@ -223,48 +196,47 @@ elif [ $# -ge 1 ]; then
   # If looking to run a random record
   elif [ "$1" == "-r" ] || [ "$1" == "--random" ]; then
     # list the records, randomize it
-    POSSIBLE_FILES=`ls -Gt $WTH_LOCATION/record*.sh | sort -R`
-    file=""
+    if [ "$TAGS" != "" ] && command -v tag > /dev/null; then
+      possible_files=`tag -m "$1" $WTH_LOCATION/record*.sh | sort -R`
+    else
+      possible_files=`ls -Gt $WTH_LOCATION/record*.sh | sort -R`
+    fi
 
-    for f in POSSIBLE_FILES; do
-      # get the first record that matches any of the tags
-      if inTags "$f" "$TAGS"; then
-        exec_record $file
-      fi
-    done
-
-    if [ "$file" == "" ]; then
+    if [ "$possible_files" == "" ]; then
       echo "Could not find any files with the following tags: $TAGS"
       exit 1
+    else
+      exec_record ${possible_files[0]}  # exec first record
     fi
     exit 0
 
   # If specifying deleting or editing a record
   elif [ "$1" == "-e" ] || [ "$1" == "--edit" ] ||
        [ "$1" == "-d" ] || [ "$1" == "--delete" ]; then
-    RECORDPATH=$(get_recordname_path $2)
+    get_recordname_path $2
 
     # If specifying to edit
     if [ "$1" == "-e" ] || [ "$1" == "--edit" ]; then
 
       # edit the tags
       if [ "$TAGS" != "" ] && command -v tag > /dev/null; then
-        tag -a $TAGS "$RECORDPATH"
+        tag -a $TAGS "$RECORDNAME_PATH"
         echo "Added the following tags: $TAGS"
 
       # edit the record in the default editor
       elif [ "$EDITOR" != "" ]; then
-        $EDITOR `echo $RECORDPATH`
+        $EDITOR `echo $RECORDNAME_PATH`
       else
-        vim `echo $RECORDPATH`
+        vim `echo $RECORDNAME_PATH`
       fi
 
-    # If specifying to delete
+    # If specifying to remove tags
     elif [ "$TAGS" != "" ] && command -v tag; then
-      tag -r $TAGS "$RECORDPATH"
+      tag -r $TAGS "$RECORDNAME_PATH"
 
+    # If specifying to delete
     else
-      rm `echo $RECORDPATH`
+      rm `echo $RECORDNAME_PATH`
     fi
     exit 0
 
@@ -275,8 +247,7 @@ elif [ $# -ge 1 ]; then
       echo -e "${RED}No record name supplied${CLEAR}"
       exit 1
     fi
-
-    DEFAULT_NAME=$(strip_name $2)
+    RECORD_NAME=$(strip_name $2)
 
   else
     if [ "$2" == "" ]; then
@@ -284,9 +255,9 @@ elif [ $# -ge 1 ]; then
         exit 1
     fi
 
-    RECORDPATH=$(get_recordname_path $1)
-    if [ "$RECORDPATH" != "" ]; then
-      exec_record "$RECORDPATH"
+    get_recordname_path $1
+    if [ "$RECORDNAME_PATH" != "" ]; then
+      exec_record "$RECORDNAME_PATH"
       exit 0
 
     else
@@ -297,12 +268,12 @@ elif [ $# -ge 1 ]; then
 fi
 
 # Write out the input to the location and make sure it's executable
-cat >> "$WTH_LOCATION/$RECORD_NAME-$DEFAULT_NAME.sh"
-chmod +x "$WTH_LOCATION/$RECORD_NAME-$DEFAULT_NAME.sh"
-echo "Added record to file: $WTH_LOCATION/$RECORD_NAME-$DEFAULT_NAME.sh"
+cat >> "$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
+chmod +x "$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
+echo "Added record to file: $WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
 
 if [ "$TAGS" != "" ] && command -v tag > /dev/null; then
-  tag -s $TAGS "$WTH_LOCATION/$RECORD_NAME-$DEFAULT_NAME.sh"
+  tag -s $TAGS "$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
   echo "Added the following tags to the file: $TAGS"
 fi
 
