@@ -78,9 +78,11 @@ EOF
 Added record to file: /Users/dylngg/wth/record-2019-01-06T15:19:50-anotherrecord.sh
 ```
 
-### Adding tags (macOS)
+### Adding and overriding tags (macOS)
 
 This feature requires that [tag](https://github.com/jdberry/tag) is installed (`brew install tag`). This is macOS only due to limited support for tags in other Unix distributions. "tag" is required since Apple doesn't have a nice way of setting tags.
+
+#### Adding tags
 
 ```bash
 $ wth.sh recordname -a tag
@@ -89,7 +91,7 @@ Appended the following tags on recordname: tag
 
 The example above appends a tag to the record. You can then see that tag in the `wth.sh -l` output.
 
-### Overriding tags
+#### Overriding tags
 
 ```bash
 $ wth.sh recordname -s overrides,existing,tags
