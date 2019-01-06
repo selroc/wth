@@ -138,36 +138,32 @@ get_recordname_path() {
 
 print_help() {
   cat <<EOF
-usage: wth.sh <recordname-to-open>
-   or  wth.sh [ -l | -r | -e <recordname>]
-   or  wth.sh [ -l | -r | -e <recordname>] -t <tag>, <tag2> ...
-   or  wth.sh -n <recordname> -t <tag>, <tag2> ...
-   or  wth.sh -n <recordname>
+usage: wth.sh <recordname-to-open> [modifiers]
+   or  wth.sh <recordname-to-open> [modifiers] [flags] <arguments>
+   or  wth.sh [action] <arguments>
+   or  wth.sh [action] <arguments> [flags] <arguments>
 
-A program that lets you record notes/actions about what you're doing in a
-organized and labeled fashion. Records can then be run/viewed later to see
-your notes. Each record is stored as a bash script so actions can be taken
-when executing the record. Unless given a record name to execute, -l, -e or -r
-flag, stdin is processed as a record into a file in ~/wth. A -t added to the
-end end of any of the optional arguments causes tags to be added, or refines
-the results of the optional argument.
+A program that lets you record bash scripts about what you're doing in a
+organized and labeled fashion. Records can then be executed later to see your
+commented notes.
 
-optional arguments:
-    -n, --name            Specifes the name of the new record. If -t is
-                          invoked, the following tags are added.
-    -l, --list            Lists all the records. If -t is invoked, refines the
-                          results returned to show those with any of the given
-                          tags.
-    -r, --random          A random record is selected and executed. If -t is
-                          invoked, only records with any of the given tags will
-                          be selected.
-    -e, --edit            Edit a record with the editor specifed in the
-                          environment variable \$EDITOR. If the variable is not
-                          set, opens in vim. If -t is invoked, the following
-                          tags are added and the record is not opened.
-    -t, --tags            MacOS Only. Sets/refines the following tags to the
-                          argument to the left of it. The -t flag must occur
-                          last in the arguments. Tags must be comma seperated.
+modifiers:
+    -e, --edit            Edit/creates a record with the editor specifed in the
+                          environment variable \$EDITOR (Defaults to vim).
+    -d, --delete          Removes the record.
+
+actions:
+    -n, --name <name>     Pipes stdin into a new record with the following
+                          name. Following arguments modify the new record.
+    -l, --list <tags>     Lists all the records matching the optional following
+                          tags. Following arguments modify all listed.
+
+optional flags:
+    -a, --append <tags>   Appends the following comma separated tags to the
+                          item(s) on the left.
+    -s, --set <tags>      Overrides the following comma separated tags to the
+                          item(s) on the left. A empty argument will remove all
+                          of the tags.
 EOF
 }
 
@@ -191,23 +187,6 @@ elif [ $# -ge 1 ]; then
   # Check if specifying a list of records
   if [ "$1" == "-l" ] || [ "$1" == "--list" ]; then
     list_records $TAGS
-    exit 0
-
-  # If looking to run a random record
-  elif [ "$1" == "-r" ] || [ "$1" == "--random" ]; then
-    # list the records, randomize it
-    if [ "$TAGS" != "" ] && command -v tag > /dev/null; then
-      possible_files=`tag -m "$1" $WTH_LOCATION/record*.sh | sort -R`
-    else
-      possible_files=`ls -Gt $WTH_LOCATION/record*.sh | sort -R`
-    fi
-
-    if [ "$possible_files" == "" ]; then
-      echo "Could not find any files with the following tags: $TAGS"
-      exit 1
-    else
-      exec_record ${possible_files[0]}  # exec first record
-    fi
     exit 0
 
   # If specifying deleting or editing a record
