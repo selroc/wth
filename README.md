@@ -1,4 +1,4 @@
-# What the hell was I working on (`wth`):
+# wth: What the hell... was I working on?
 
 A program that lets you record notes/actions about what you're doing in a organized and labeled fashion. Records can then be executed/viewed later to see your notes. Each record is stored as a bash script so it can be executed. This requires non executable notes to start with a `#`.
 
@@ -47,6 +47,13 @@ $ wth.sh -l
 # Working on ...
 xdg-open ~/Documents/importantDoc.txt
 # Left off at this point
+
+(2019/01/06 at 15:19:50) some_other_record:
+---
+# At some point you put this in.
+echo "Hello Again!"
+
+$
 ```
 
 ### Editing your record at a later point
@@ -76,6 +83,7 @@ $ cat <<EOF | wth.sh anotherrecord -S
 echo "Done!"
 EOF
 Added record to file: /Users/dylngg/wth/record-2019-01-06T15:19:50-anotherrecord.sh
+$
 ```
 
 ### Adding and overriding tags (macOS)

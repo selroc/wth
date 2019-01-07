@@ -204,7 +204,7 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
   case "$2" in
     "--edit" | "-e")
       place_record_metadata
-      if elementIn $RECORD_NAME $RECORD_NAMES; then
+      if elementIn $RECORD_NAME ${RECORD_NAMES[@]}; then
         get_recordname_path $RECORD_NAME
       else
         RECORDNAME_PATH="$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
