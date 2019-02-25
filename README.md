@@ -4,7 +4,37 @@ A program that lets you record notes/actions about what you're doing in a organi
 
 ## Skip the fluff:
 
-`wth.sh --help`
+```bash
+$ wth.sh --help
+usage: wth.sh <recordname-to-open>
+   or  wth.sh <recordname-to-modify> [flags] <tags>
+   or  wth.sh <recordname-to-modify> [modifier]
+   or  wth.sh <recordname-to-modify> [modifier] [flags] <tags>
+   or  wth.sh [action]
+   or  wth.sh [action] <tags>
+
+A program that lets you record bash scripts about what you're doing in a
+organized and labeled fashion. Records can then be executed later to see your
+commented notes.
+
+modifiers:
+    -e, --edit            Edit/creates a record with the editor specifed in the
+                          environment variable $EDITOR (Defaults to vim).
+    -d, --delete          Removes the record.
+    -S, --stdin           Append stdin into the existing or new record.
+
+actions:
+    -l, --list <tags>     Lists all the records matching the optional following
+                          tags. Following arguments modify all listed.
+    -h, --help            Prints out help.
+
+optional flags:
+    -a, --append <tags>   Appends the following comma separated tags to the
+                          item(s) on the left.
+    -s, --set <tags>      Overrides the following comma separated tags to the
+                          item(s) on the left. A empty argument will remove all
+                          of the tags.
+```
 
 ## Basic usage
 
