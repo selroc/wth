@@ -213,7 +213,9 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
       # edit the record in the default editor
       if [ "$EDITOR" != "" ]; then
         $EDITOR `echo $RECORDNAME_PATH`
-        chmod +x "$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
+        if [ -f "$RECORDNAME_PATH" ]; then
+          chmod +x "$RECORDNAME_PATH"
+        fi
       else
         vim `echo $RECORDNAME_PATH`
       fi
