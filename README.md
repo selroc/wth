@@ -18,22 +18,26 @@ organized and labeled fashion. Records can then be executed later to see your
 commented notes.
 
 modifiers:
-    -e, --edit            Edit/creates a record with the editor specifed in the
-                          environment variable $EDITOR (Defaults to vim).
-    -d, --delete          Removes the record.
-    -S, --stdin           Append stdin into the existing or new record.
+    -e, --edit                  Edit/creates a record with the editor specifed
+                                in the environment variable $EDITOR (Defaults
+                                to vim).
+    -d, --delete                Removes the record.
+    -S, --stdin                 Append stdin into the existing or new record.
+    -c, --copy <new-recordname> Copies the record into a new record and opens
+                                up a editor like the -e flag does.
 
 actions:
-    -l, --list <tags>     Lists all the records matching the optional following
-                          tags. Following arguments modify all listed.
-    -h, --help            Prints out help.
+    -l, --list <tags>           Lists all the records matching the optional
+                                following tags. Following arguments modify all
+                                listed.
+    -h, --help                  Prints out help.
 
 optional flags:
-    -a, --append <tags>   Appends the following comma separated tags to the
-                          item(s) on the left.
-    -s, --set <tags>      Overrides the following comma separated tags to the
-                          item(s) on the left. A empty argument will remove all
-                          of the tags.
+    -a, --append <tags>         Appends the following comma separated tags to
+                                the item(s) on the left.
+    -s, --set <tags>            Overrides the following comma separated tags
+                                to the item(s) on the left. A empty argument
+                                will remove all of the tags.
 ```
 
 ## Basic usage
@@ -101,6 +105,14 @@ $ wth.sh recordname -d
 ```
 
 Self explanatory.
+
+### Copying your record
+
+```bash
+$ wth.sh recordname -c new-recordname
+```
+
+This copies the specified record to the new record and opens the new record in your editor.
 
 ## Further Usage
 

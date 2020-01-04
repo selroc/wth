@@ -162,27 +162,31 @@ organized and labeled fashion. Records can then be executed later to see your
 commented notes.
 
 modifiers:
-    -e, --edit            Edit/creates a record with the editor specifed in the
-                          environment variable \$EDITOR (Defaults to vim).
-    -d, --delete          Removes the record.
-    -S, --stdin           Append stdin into the existing or new record.
+    -e, --edit                  Edit/creates a record with the editor specifed
+                                in the environment variable \$EDITOR (Defaults
+                                to vim).
+    -d, --delete                Removes the record.
+    -S, --stdin                 Append stdin into the existing or new record.
+    -c, --copy <new-recordname> Copies the record into a new record and opens
+                                up a editor like the -e flag does.
 
 actions:
-    -l, --list <tags>     Lists all the records matching the optional following
-                          tags. Following arguments modify all listed.
-    -h, --help            Prints out help.
+    -l, --list <tags>           Lists all the records matching the optional
+                                following tags. Following arguments modify all
+                                listed.
+    -h, --help                  Prints out help.
 
 optional flags:
-    -a, --append <tags>   Appends the following comma separated tags to the
-                          item(s) on the left.
-    -s, --set <tags>      Overrides the following comma separated tags to the
-                          item(s) on the left. A empty argument will remove all
-                          of the tags.
+    -a, --append <tags>         Appends the following comma separated tags to
+                                the item(s) on the left.
+    -s, --set <tags>            Overrides the following comma separated tags
+                                to the item(s) on the left. A empty argument
+                                will remove all of the tags.
 EOF
 }
 
 
-MODIFIERS=(-e --edit -d --delete -S --stdin)
+MODIFIERS=(-e --edit -d --delete -S --stdin -c --copy)
 ACTIONS=(-l --list -h --help)
 FLAGS=(-a --append -s --set)
 
@@ -230,6 +234,30 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
       cat >> "$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
       chmod +x "$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
       echo "Added record to file: $WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
+      shift
+      ;;
+    "--copy" | "-c")
+      get_recordname_path $RECORD_NAME
+      shift
+      NEW_RECORD_NAME="$2"
+      if [ "$NEW_RECORD_NAME" == "" ]; then
+        echo "No new record specified"
+        exit 1
+      fi
+
+      NEW_RECORDNAME_PATH="$WTH_LOCATION/$RECORD_PREFIX-$NEW_RECORD_NAME.sh"
+      cp $RECORDNAME_PATH $NEW_RECORDNAME_PATH
+      echo "Copied record to file: $NEW_RECORDNAME_PATH"
+
+      # edit the record in the default editor
+      if [ "$EDITOR" != "" ]; then
+        $EDITOR `echo $NEW_RECORDNAME_PATH`
+        if [ -f "$NEW_RECORDNAME_PATH" ]; then
+          chmod +x "$NEW_RECORDNAME_PATH"
+        fi
+      else
+        vim `echo $NEW_RECORDNAME_PATH`
+      fi
       shift
       ;;
   esac
