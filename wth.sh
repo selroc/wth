@@ -4,9 +4,17 @@
 # A program that lets you record notes/actions about what you're doing in a
 # organized and labeled fashion. Records can then be run/viewed later to see
 # your notes. Each record is stored as a bash script so actions can be taken
-# when executing the record.
+# when executing the record. Records are stored in either $WTHDIR,
+# $XDG_DATA_HOME/wth, or if none of those are set, $HOME/.local/share/wth.
 
-WTH_LOCATION=~/wth
+if [ "$WTHDIR" == "" ]; then
+    if [ "$XDG_DATA_HOME" != "" ]; then
+        WTHDIR="$XDG_DATA_HOME/wth"
+    else
+        WTHDIR="$HOME/.local/share/wth"
+    fi
+fi
+mkdir -p $WTHDIR
 RECORD_PREFIX="record-`date +%FT%T`"
 RECORD_NAME="untitled"
 PREVIEW_LENGTH=3
@@ -34,9 +42,9 @@ place_record_metadata() {
   RECORD_FILENAMES=()
   RECORD_NAMES=()
   RECORD_DATES=()
-  search_method=`ls -1 $WTH_LOCATION/record*.sh`
+  search_method=`ls -1 $WTHDIR/record*.sh`
   if [ ! -z "$1" ] && command -v tag > /dev/null; then
-      search_method=`tag -m "$1" $WTH_LOCATION/record*.sh`
+      search_method=`tag -m "$1" $WTHDIR/record*.sh`
   fi
 
   for f in $search_method; do
@@ -211,8 +219,8 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
       if elementIn $RECORD_NAME ${RECORD_NAMES[@]}; then
         get_recordname_path $RECORD_NAME
       else
-        RECORDNAME_PATH="$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
-        echo "Added record to file: $WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
+        RECORDNAME_PATH="$WTHDIR/$RECORD_PREFIX-$RECORD_NAME.sh"
+        echo "Added record to file: $RECORDNAME_PATH"
       fi
       # edit the record in the default editor
       if [ "$EDITOR" != "" ]; then
@@ -231,9 +239,10 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
       exit 0
       ;;
     "--stdin" | "-S")
-      cat >> "$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
-      chmod +x "$WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
-      echo "Added record to file: $WTH_LOCATION/$RECORD_PREFIX-$RECORD_NAME.sh"
+      NEW_RECORDNAME_PATH="$WTHDIR/$RECORD_PREFIX-$RECORD_NAME.sh"
+      cat >> "$NEW_RECORDNAME_PATH"
+      chmod +x "$NEW_RECORDNAME_PATH"
+      echo "Added record to file: $NEW_RECORDNAME_PATH"
       shift
       ;;
     "--copy" | "-c")
@@ -245,7 +254,7 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
         exit 1
       fi
 
-      NEW_RECORDNAME_PATH="$WTH_LOCATION/$RECORD_PREFIX-$NEW_RECORD_NAME.sh"
+      NEW_RECORDNAME_PATH="$WTHDIR/$RECORD_PREFIX-$NEW_RECORD_NAME.sh"
       cp $RECORDNAME_PATH $NEW_RECORDNAME_PATH
       echo "Copied record to file: $NEW_RECORDNAME_PATH"
 
