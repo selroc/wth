@@ -20,8 +20,8 @@ RECORD_NAME="untitled"
 PREVIEW_LENGTH=3
 COLOR=true
 
-# Show color if terminal is defined and color is true
-if [ ! -z ${TERM+x} ] || [ "$TERM" != "" ] && $COLOR; then
+# Show color if terminal is a tty and color is true
+if [ ! -z ${TERM+x} ] || [ "$TERM" != "" ] && test -t 1 && $COLOR; then
   GRAY='\033[0;37m'
   GREEN='\033[0;32m'
   RED='\033[0;31m'
