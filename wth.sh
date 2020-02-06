@@ -48,15 +48,28 @@ place_record_metadata() {
   fi
 
   for f in $search_method; do
-    local name=`basename "$f"`
-    RECORD_FULL_PATHS+=("$f")
-    RECORD_FILENAMES+=("$name")
-    RECORD_NAMES+=("`echo "$name" | awk -F '-' '{ print $5 }' \
-                    | sed 's/\.sh//'`")
+    local filename=`basename "$f"`
+    local record_name="`echo "$filename" \
+                       | awk -F '-' '{ print $5 }' \
+                       | sed 's/\.sh//'`"
+    if [ "$record_name" == "" ]; then
+      continue
+    fi
+
     # echo the full filename, remove the name.sh, replace T in iso std w/ at
-    RECORD_DATES+=("`echo "$name" | sed 's/record-//' \
-                    | sed "s/-${RECORD_NAMES[${#RECORD_NAMES[@]}-1]}.sh//" \
-                    | sed 's/T/ at /' | sed 's;-;/;g'`")
+    local record_date="`echo "$filename" \
+                       | sed 's/record-//' \
+                       | sed "s/-$record_name.sh//" \
+                       | sed 's/T/ at /' \
+                       | sed 's;-;/;g'`"
+    if [ "$record_date" == "" ]; then
+      continue
+    fi
+
+    RECORD_FILENAMES+=("$filename")
+    RECORD_NAMES+=("$record_name")
+    RECORD_DATES+=("$record_date")
+    RECORD_FULL_PATHS+=("$f")
   done
 }
 
