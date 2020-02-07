@@ -16,6 +16,7 @@ if [ "$WTHDIR" == "" ]; then
 fi
 mkdir -p $WTHDIR
 RECORD_PREFIX="record-`date +%FT%T`"
+RECORD_ALIAS_PREFIX="record-alias"
 RECORD_NAME="untitled"
 PREVIEW_LENGTH=3
 COLOR=true
@@ -42,6 +43,9 @@ place_record_metadata() {
   RECORD_FILENAMES=()
   RECORD_NAMES=()
   RECORD_DATES=()
+  RECORD_ALIAS_FULL_PATHS=()
+  RECORD_ALIAS_RESOLVED_FULL_PATHS=()
+  RECORD_ALIAS_NAMES=()
   search_method=`ls -1 $WTHDIR/record*.sh`
   if [ ! -z "$1" ] && command -v tag > /dev/null; then
       search_method=`tag -m "$1" $WTHDIR/record*.sh`
@@ -49,9 +53,20 @@ place_record_metadata() {
 
   for f in $search_method; do
     local filename=`basename "$f"`
-    local record_name="`echo "$filename" \
-                       | awk -F '-' '{ print $5 }' \
-                       | sed 's/\.sh//'`"
+
+    if [ "`echo $filename | awk -F '-' '{ printf $2 }'`" = "alias" ]; then
+      local record_name="`echo "$filename" \
+                         | awk -F '-' '{ print $3 }' \
+                         | sed 's/\.sh//'`"
+      RECORD_ALIAS_NAMES+=("$record_name")
+      RECORD_ALIAS_FULL_PATHS+=("$f")
+      RECORD_ALIAS_RESOLVED_FULL_PATHS+=(`readlink -e "$f"`)
+      continue
+    else
+      local record_name="`echo "$filename" \
+                         | awk -F '-' '{ print $5 }' \
+                         | sed 's/\.sh//'`"
+    fi
     if [ "$record_name" == "" ]; then
       continue
     fi
@@ -90,15 +105,23 @@ list_records() {
   place_record_metadata $1
 
   for ((i=0; i<${#RECORD_FULL_PATHS[@]}; i++)); do
-    local full_path=${RECORD_FULL_PATHS[$i]}
+    local full_path=`readlink -e ${RECORD_FULL_PATHS[$i]}`
+    local alias_name=""
     local tags=""
 
     if command -v tag > /dev/null; then
       tags="`tag -lN $full_path`"
     fi
+    for ((j=0; j<${#RECORD_ALIAS_RESOLVED_FULL_PATHS[@]}; j++)); do
+      if [ "$full_path" == "${RECORD_ALIAS_RESOLVED_FULL_PATHS[$j]}" ]; then
+        alias_name=" (${RECORD_ALIAS_NAMES[$j]})"
+        break
+      fi
+    done
+
     # if record tags contain any specified tags if applicable
     printf "%-23s ${GREEN}%s${CLEAR}: ${BLUE}%s${CLEAR}\n" "(${RECORD_DATES[$i]})" \
-           "${RECORD_NAMES[$i]}" "$tags"
+           "${RECORD_NAMES[$i]}$alias_name" "$tags"
 
     # print first 2 lines of record
     echo "---"
@@ -135,9 +158,30 @@ get_recordname_path() {
   done
 
   if [ ${#found_names[@]} -eq 0 ]; then
-    echo "Could not find record $1, try running wth.sh -l and providing" \
-          "the resulting name shown after the date."
-    exit 1
+    local found_alias=false
+    for ((i=0; i<${#RECORD_ALIAS_NAMES[@]}; i++)); do
+      if [ $1 == ${RECORD_ALIAS_NAMES[$i]} ]; then
+        found_alias=true
+        break
+      fi
+    done
+
+    if ! $found_alias; then
+      echo "Could not find record $1, try running wth.sh -l and providing" \
+           "the resulting name shown after the date."
+      exit 1
+    fi
+
+    if $resolve_alias; then
+        RECORDNAME_PATH="${RECORD_ALIAS_RESOLVED_FULL_PATHS[$i]}"
+    else
+        RECORDNAME_PATH="${RECORD_ALIAS_FULL_PATHS[$i]}"
+    fi
+
+    if [ ! -f "$RECORDNAME_PATH" ]; then
+      echo "Invalid alias for $1: $RECORDNAME_PATH"
+      exit 1
+    fi
 
   elif [ ${#found_names[@]} -gt 1 ]; then
     echo "Found the following results:"
@@ -190,6 +234,8 @@ modifiers:
     -S, --stdin                 Append stdin into the existing or new record.
     -c, --copy <new-recordname> Copies the record into a new record and opens
                                 up a editor like the -e flag does.
+    -A, --alias <alias-recordname>
+                                Creates an alias for the record.
 
 actions:
     -l, --list <tags>           Lists all the records matching the optional
@@ -207,7 +253,7 @@ EOF
 }
 
 
-MODIFIERS=(-e --edit -d --delete -S --stdin -c --copy)
+MODIFIERS=(-e --edit -d --delete -S --stdin -c --copy -A --alias)
 ACTIONS=(-l --list -h --help)
 FLAGS=(-a --append -s --set)
 
@@ -229,8 +275,8 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
   case "$2" in
     "--edit" | "-e")
       place_record_metadata
-      if elementIn $RECORD_NAME ${RECORD_NAMES[@]}; then
-        get_recordname_path $RECORD_NAME
+      if elementIn $RECORD_NAME ${RECORD_NAMES[@]} || elementIn $RECORD_NAME ${RECORD_ALIAS_NAMES[@]}; then
+        resolve_alias=true; get_recordname_path $RECORD_NAME
       else
         RECORDNAME_PATH="$WTHDIR/$RECORD_PREFIX-$RECORD_NAME.sh"
         echo "Added record to file: $RECORDNAME_PATH"
@@ -247,7 +293,7 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
       shift
       ;;
     "--delete" | "-d")
-      get_recordname_path $RECORD_NAME
+      resolve_alias=false; get_recordname_path $RECORD_NAME
       rm $RECORDNAME_PATH
       exit 0
       ;;
@@ -259,7 +305,7 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
       shift
       ;;
     "--copy" | "-c")
-      get_recordname_path $RECORD_NAME
+      resolve_alias=true; get_recordname_path $RECORD_NAME
       shift
       NEW_RECORD_NAME="$2"
       if [ "$NEW_RECORD_NAME" == "" ]; then
@@ -282,6 +328,20 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
       fi
       shift
       ;;
+    "--alias" | "-A")
+      resolve_alias=true; get_recordname_path $RECORD_NAME
+      shift
+      NEW_RECORD_ALIAS_NAME="$2"
+      if [ "$NEW_RECORD_ALIAS_NAME" == "" ]; then
+        echo "No new record alias specified"
+        exit 1
+      fi
+
+      NEW_RECORDNAME_ALIAS_PATH="$WTHDIR/$RECORD_ALIAS_PREFIX-$NEW_RECORD_ALIAS_NAME.sh"
+      ln -s $RECORDNAME_PATH $NEW_RECORDNAME_ALIAS_PATH
+      echo "Created record alias: $NEW_RECORDNAME_ALIAS_PATH -> $RECORDNAME_PATH"
+      shift
+      ;;
   esac
 
   # append or set the tags
@@ -290,7 +350,7 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
       echo "`tag` is not installed on this machine (tag is only on MacOS)"
     fi
     tags="${@:3}"
-    get_recordname_path $RECORD_NAME
+    resolve_alias=true; get_recordname_path $RECORD_NAME
 
     case "$2" in
       "--append" | "-a")
@@ -306,7 +366,7 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
   exit 0
 
 else
-  get_recordname_path $1
+  resolve_alias=true; get_recordname_path $1
   if [ "$RECORDNAME_PATH" != "" ]; then
     exec_record "$RECORDNAME_PATH"
     exit 0

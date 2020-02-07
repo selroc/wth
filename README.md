@@ -5,7 +5,6 @@ A program that lets you record notes/actions about what you're doing in a organi
 ## Skip the fluff:
 
 ```bash
-$ wth.sh --help
 usage: wth.sh <recordname-to-open>
    or  wth.sh <recordname-to-modify> [flags] <tags>
    or  wth.sh <recordname-to-modify> [modifier]
@@ -25,6 +24,8 @@ modifiers:
     -S, --stdin                 Append stdin into the existing or new record.
     -c, --copy <new-recordname> Copies the record into a new record and opens
                                 up a editor like the -e flag does.
+    -A, --alias <alias-recordname>
+                                Creates an alias for the record.
 
 actions:
     -l, --list <tags>           Lists all the records matching the optional
@@ -113,6 +114,15 @@ $ wth.sh recordname -c new-recordname
 ```
 
 This copies the specified record to the new record and opens the new record in your editor.
+
+### Aliasing your record
+
+```bash
+$ wth.sh recordname -A alias-recordname
+# "wth.sh alias-recordname" executes recordname
+```
+
+This creates a alias for the specified record. The alias can then be used in place of the specified recordname.
 
 ## Further Usage
 
