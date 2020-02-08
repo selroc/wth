@@ -21,6 +21,12 @@ RECORD_NAME="untitled"
 PREVIEW_LENGTH=3
 COLOR=true
 
+# "readlink -f" doesn't work on MacOS/BSDs. The following gets around this:
+# https://stackoverflow.com/questions/1055671/how-can-i-get-the-behavior-of-gnus-readlink-f-on-a-mac
+# credit to @JinnKo!
+readlink() { perl -MCwd -e 'print Cwd::abs_path shift' "$1"; }
+# (perl is installed by default on Macs)
+
 # Show color if terminal is a tty and color is true
 if [ ! -z ${TERM+x} ] || [ "$TERM" != "" ] && test -t 1 && $COLOR; then
   GRAY='\033[0;37m'
@@ -60,7 +66,7 @@ place_record_metadata() {
                          | sed 's/\.sh//'`"
       RECORD_ALIAS_NAMES+=("$record_name")
       RECORD_ALIAS_FULL_PATHS+=("$f")
-      RECORD_ALIAS_RESOLVED_FULL_PATHS+=(`readlink -e "$f"`)
+      RECORD_ALIAS_RESOLVED_FULL_PATHS+=(`readlink "$f"`)
       continue
     else
       local record_name="`echo "$filename" \
@@ -105,7 +111,7 @@ list_records() {
   place_record_metadata $1
 
   for ((i=0; i<${#RECORD_FULL_PATHS[@]}; i++)); do
-    local full_path=`readlink -e ${RECORD_FULL_PATHS[$i]}`
+    local full_path=`readlink ${RECORD_FULL_PATHS[$i]}`
     local alias_name=""
     local tags=""
 
