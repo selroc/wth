@@ -36,6 +36,12 @@ if [ ! -z ${TERM+x} ] || [ "$TERM" != "" ] && test -t 1 && $COLOR; then
   CLEAR='\033[0m'
 fi
 
+die() {
+  unalias -a
+  echo $1
+  exit 1
+}
+
 # Exec a record
 exec_record() {
   grep '^\#.*$' $1
@@ -145,8 +151,7 @@ list_records() {
 get_recordname_path() {
   RECORDNAME_PATH=""
   if [ -z "$1" ]; then
-    echo "No record name specified"
-    exit 1
+    die "No record name specified"
   fi
 
   local found_dates=()
@@ -173,9 +178,8 @@ get_recordname_path() {
     done
 
     if ! $found_alias; then
-      echo "Could not find record $1, try running wth.sh -l and providing" \
-           "the resulting name shown after the date."
-      exit 1
+      die "Could not find record $1, try running wth.sh -l and providing" \
+          "the resulting name shown after the date."
     fi
 
     if $resolve_alias; then
@@ -185,8 +189,7 @@ get_recordname_path() {
     fi
 
     if [ ! -f "$RECORDNAME_PATH" ]; then
-      echo "Invalid alias for $1: $RECORDNAME_PATH"
-      exit 1
+      die "Invalid alias for $1: $RECORDNAME_PATH"
     fi
 
   elif [ ${#found_names[@]} -gt 1 ]; then
@@ -202,8 +205,7 @@ get_recordname_path() {
     elif [ ! -z ${found_paths[$input]} ]; then
         RECORDNAME_PATH=${found_paths[$input]}
     else
-      echo "Not valid selection, quiting."
-      exit 1
+      die "Not valid selection, quiting."
     fi
 
   # if there's only one thing found
@@ -339,8 +341,7 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
       shift
       NEW_RECORD_ALIAS_NAME="$2"
       if [ "$NEW_RECORD_ALIAS_NAME" == "" ]; then
-        echo "No new record alias specified"
-        exit 1
+        die "No new record alias specified"
       fi
 
       NEW_RECORDNAME_ALIAS_PATH="$WTHDIR/$RECORD_ALIAS_PREFIX-$NEW_RECORD_ALIAS_NAME.sh"
@@ -377,8 +378,6 @@ else
     exec_record "$RECORDNAME_PATH"
     exit 0
   else
-    echo -e "${RED}Invalid Arguments. See --help${CLEAR}"
-    exit 1
+    die "${RED}Invalid Arguments. See --help${CLEAR}"
   fi
-
 fi
