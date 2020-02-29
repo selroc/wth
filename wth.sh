@@ -244,6 +244,7 @@ modifiers:
                                 up a editor like the -e flag does.
     -A, --alias <alias-recordname>
                                 Creates an alias for the record.
+    -p, --print                 Prints out the record.
 
 actions:
     -l, --list <tags>           Lists all the records matching the optional
@@ -261,7 +262,7 @@ EOF
 }
 
 
-MODIFIERS=(-e --edit -d --delete -S --stdin -c --copy -A --alias)
+MODIFIERS=(-e --edit -d --delete -S --stdin -c --copy -A --alias -p --print)
 ACTIONS=(-l --list -h --help)
 FLAGS=(-a --append -s --set)
 
@@ -348,6 +349,11 @@ elif elementIn $2 "${MODIFIERS[@]}" || elementIn $2 "${FLAGS[@]}"; then
       ln -s $RECORDNAME_PATH $NEW_RECORDNAME_ALIAS_PATH
       echo "Created record alias: $NEW_RECORDNAME_ALIAS_PATH -> $RECORDNAME_PATH"
       shift
+      ;;
+    "--print" | "-p")
+      resolve_alias=true; get_recordname_path $RECORD_NAME
+      shift
+      cat $RECORDNAME_PATH
       ;;
   esac
 
